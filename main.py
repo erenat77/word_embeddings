@@ -49,13 +49,14 @@ def review_sentences(review, tokenizer, remove_stopwords=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='settings for main function')
     parser.add_argument('--d','--datafile', action='store', required=True,
-                        help ='add the data file ')
+                        help ='add the data file')
     parser.add_argument('--n','--numvec', action='store',type=int,required=False, 
-                        default=300,help ='add the data file ')
-
+                        default=300,help ='number of vector')
+    parser.add_argument('--t','--train', action='store_true',required=False, 
+                        help ='Do you want to train the model?')
     args = parser.parse_args()
     data_file=args.d
-    num_features = args.n  # Word vector dimensionality
+    num_features = args.n  # Word vector dimensionality 
     
     # reading .tsv file
     train = pd.read_csv(data_file, header=0, delimiter="\t", quoting=3)
@@ -72,30 +73,34 @@ if __name__ == "__main__":
     for review in train["review"]:
         sentences += review_sentences(review, tokenizer)
     print("First sentence : {}".format(sentences[0]))
+    
+    if args.t:
+        # Creating the model and setting values for the various parameters
+        min_word_count = 40 # Minimum word count
+        num_workers = 4     # Number of parallel threads
+        context = 10        # Context window size
+        downsampling = 1e-3 # (0.001) Downsample setting for frequent words
 
-    # Creating the model and setting values for the various parameters
-    min_word_count = 40 # Minimum word count
-    num_workers = 4     # Number of parallel threads
-    context = 10        # Context window size
-    downsampling = 1e-3 # (0.001) Downsample setting for frequent words
+        # Initializing the train model
+        print("Training model....")
+        model = word2vec.Word2Vec(sentences,\
+                                workers=num_workers,\
+                                size=num_features,\
+                                min_count=min_word_count,\
+                                window=context,
+                                sample=downsampling)
 
-    # Initializing the train model
-    #print("Training model....")
-    model = word2vec.Word2Vec(sentences,\
-                            workers=num_workers,\
-                            size=num_features,\
-                            min_count=min_word_count,\
-                            window=context,
-                            sample=downsampling)
+        # To make the model memory efficient
+        model.init_sims(replace=True)
+        # Saving the model for later use. Can be loaded using Word2Vec.load()
+        print("Saving the model")
+        model_name = "300features_40minwords_10context.emb"
+        model.save(model_name)
+    else:
+        #Building the model from existing model
+        print("Loading/building model from the folder")
+        model = word2vec.Word2Vec.load("300features_40minwords_10context.emb")
 
-    # To make the model memory efficient
-    #model.init_sims(replace=True)
-    # Saving the model for later use. Can be loaded using Word2Vec.load()
-    #print("Saving the model")
-    model_name = "300features_40minwords_10context"
-    model.save(model_name)
-    print("Loading model from the folder")
-    model.load(model_name)
     # Few tests: This will print the odd word among them 
     print(model.wv.doesnt_match("man woman king queen princess dog".split()))
     print(model.wv.doesnt_match("europe africa USA turkey".split()))
