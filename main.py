@@ -105,6 +105,6 @@ if __name__ == "__main__":
     print(model.wv.doesnt_match("man woman king queen princess".split()))
     print("which one does not match at the following words ? \n europe africa USA turkey \n {}".format(model.wv.doesnt_match("europe africa USA turkey".split())))
     print("Similar to 'best' :{} \n".format(model.wv.most_similar("best")))
-    print("Similar to 'best' : {} \n ".format(model.wv.most_similar("boring")))
+    print("Similar to 'boring' : {} \n ".format(model.wv.most_similar("boring")))
     print(model.wv.most_similar_cosmul(positive=['man', 'woman'],\
                                     negative=['princess']))
